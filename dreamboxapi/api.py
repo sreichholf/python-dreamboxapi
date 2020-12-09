@@ -325,5 +325,3 @@ class DreamboxApi(object):
         else:
             self.get_current()
         return result
-
-DreamboxApi
