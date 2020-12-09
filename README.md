@@ -1,5 +1,5 @@
-[![PyPi](https://img.shields.io/pypi/v/dreamboxapi.svg)](https://pypi.python.org/pypi/dreamboxapi)
+[![Python package](https://github.com/sreichholf/python-dreamboxapi/workflows/Python%20package/badge.svg?branch=master)](https://github.com/sreichholf/python-dreamboxapi/actions)
 
-[![Build Status](https://github.com/sreichholf/python-dreamboxapi/workflows/.github/workflows/main.yml/badge.svg)](https://github.com/sreichholf/python-dreamboxapi/actions)
+[![PyPi](https://img.shields.io/pypi/v/dreamboxapi.svg)](https://pypi.python.org/pypi/dreamboxapi)
 
 A python client library for dreamboxes using requests
