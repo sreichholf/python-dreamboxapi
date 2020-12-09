@@ -2,4 +2,11 @@
 
 [![PyPi](https://img.shields.io/pypi/v/dreamboxapi.svg)](https://pypi.python.org/pypi/dreamboxapi)
 
-A python client library for dreamboxes using requests
+### A python client library for dreamboxes using requests
+
+### Super simple example
+``` { .py }
+from dreamboxapi.api import DreamboxApi
+api = DreamboxApi(host="my.dreambox.local")
+print(api.current.name)
+```
