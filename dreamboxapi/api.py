@@ -2,7 +2,7 @@ import logging
 
 from enum import Enum
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, HTTPError
 from urllib.parse import urlencode
 
 import xml.etree.cElementTree as ET
@@ -15,6 +15,10 @@ _LOGGER = logging.getLogger(__name__)
 def enable_logging():
     """ Setup the logging for home assistant. """
     logging.basicConfig(level=logging.INFO)
+
+
+class AuthenticationFailed(HTTPError):
+    pass
 
 
 class DreamboxApi(object):
@@ -121,12 +125,13 @@ class DreamboxApi(object):
 
     @property
     def mac(self):
-        for nic in self.deviceinfo.interfaces:
-            if nic.mac.startswith("00:09:34"):
-                return nic.mac
-        if len(self.deviceinfo.interfaces):
-            return self.deviceinfo.interfaces[0].mac
-        return "00:00:00:00:00"
+        if self.deviceinfo:
+            for nic in self.deviceinfo.interfaces:
+                if nic.mac.startswith("00:09:34"):
+                    return nic.mac
+            if len(self.deviceinfo.interfaces):
+                return self.deviceinfo.interfaces[0].mac
+        return ""
 
     def picon(self, service=None):
         if not self._piconPath:
@@ -189,12 +194,14 @@ class DreamboxApi(object):
                     data["sessionid"] = self._sessionid
                     response = self._session.post(url, data=data)
             self._available = True
+            if response.status_code == 401:
+                raise AuthenticationFailed(response)
             if response.status_code == 200:
                 return ET.fromstring(response.text)
             else:
                 _LOGGER.error(
-                    "Request failed with '{}:{}' for '{}'".format(
-                        response.status_code, response.text, url
+                    "Request failed with '{}' for '{}'".format(
+                        response.status_code, url
                     )
                 )
         except ConnectionError as e:
