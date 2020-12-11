@@ -81,7 +81,6 @@ class DreamboxApi(object):
         self._status = {}
         self._deviceinfo = None
         self._bouquets = []
-        self.update()
 
     def update(self):
         _LOGGER.info("Updating data...")
