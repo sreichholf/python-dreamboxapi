@@ -87,7 +87,7 @@ class DreamboxApi(object):
         self._bouquets = []
 
     def update(self):
-        _LOGGER.info("Updating data...")
+        _LOGGER.debug("Updating data...")
         self.get_deviceinfo()
         self.get_current()
         self.get_powerstate()
@@ -188,7 +188,7 @@ class DreamboxApi(object):
             response = self._session.post(url, data=data)
             _LOGGER.debug("HTTP Response Code: {}".format(response.status_code))
             if response.status_code == 412:  # precondition failed, session invalid
-                _LOGGER.info("Precondition Failed - Aquiring new session")
+                _LOGGER.debug("Precondition Failed - Aquiring new session")
                 self.get_session()
                 if self._sessionid:
                     data["sessionid"] = self._sessionid
@@ -219,7 +219,7 @@ class DreamboxApi(object):
             _LOGGER.warning("Session request failed!")
             return
         self._sessionid = root.text
-        _LOGGER.info(
+        _LOGGER.debug(
             "Session aquired, sessionid is '..{}'".format(self._sessionid[-5:])
         )
 
@@ -303,7 +303,7 @@ class DreamboxApi(object):
             if b.ref == self._defaultBouquet:
                 self._bouquet = b
             b.services = self.get_services(b.ref)
-            _LOGGER.info("Bouquet: {} ({})".format(b.name, len(b.services)))
+            _LOGGER.debug("Bouquet: {} ({})".format(b.name, len(b.services)))
         if not self._bouquet:
             self._bouquet = self._bouquets[0]
 
