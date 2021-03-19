@@ -39,6 +39,6 @@ setup(
     packages=find_packages(include=['dreamboxapi']),
     setup_requires=setup_requirements,
     url='https://github.com/sreichholf/python-dreamboxapi',
-    version='1.0.2',
+    version='1.0.3',
     zip_safe=False,
 )
