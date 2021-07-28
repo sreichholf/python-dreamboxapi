@@ -1,3 +1,3 @@
-__author__ = """Stephan REichholf"""
+__author__ = """Stephan Reichholf"""
 __email__ = 'reichi@opendreambox.org'
-__version__ = '1.0.2'
+__version__ = '1.0.4'
