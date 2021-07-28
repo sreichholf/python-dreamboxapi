@@ -76,7 +76,7 @@ class DreamboxApi(object):
         self._baseUrl = "{}://{}:{}".format(protocol, self._host, self._port)
 
         self._instandby = True
-        self._available = True
+        self._available = False
 
         self._sessionid = None
 
@@ -87,7 +87,7 @@ class DreamboxApi(object):
         self._bouquets = []
 
     def update(self):
-        _LOGGER.debug("Updating data...")
+        _LOGGER.debug(f"Updating data for {self._baseUrl}")
         self.get_deviceinfo()
         self.get_current()
         self.get_powerstate()
@@ -206,7 +206,7 @@ class DreamboxApi(object):
                 )
         except ConnectionError as e:
             self._available = False
-            _LOGGER.error(e)
+            _LOGGER.warning(f"Connection FAILED ({self._baseUrl}): {e}")
 
         return None
 
