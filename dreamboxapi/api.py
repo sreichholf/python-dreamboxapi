@@ -205,6 +205,8 @@ class DreamboxApi(object):
             )
 
         content_type = response.headers.get("Content-Type") or "image/png"
+        if not content_type.startswith("image/"):
+            return (None, None)
         return (response.content, content_type)
 
     def _getMuted(self):

@@ -520,6 +520,11 @@ class PiconTests(DreamboxApiTestCase):
         self.assertEqual(content, b"\x89PNG")
         self.assertEqual(content_type, "image/png")
 
+    def test_get_picon_rejects_non_image_content_type(self):
+        self.get.return_value = _image_response(b"<html />", "text/html")
+
+        self.assertEqual(self.api.get_picon(self.service), (None, None))
+
     def test_get_picon_404_returns_none_without_changing_availability(self):
         self.api._available = True
         self.get.return_value = _image_response(status_code=404)
