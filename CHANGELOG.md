@@ -6,7 +6,7 @@
 
 - Send remote-control key presses to `/web/remotecontrol` instead of `/web/zap`, and parse
   its `e2result`/`e2resulttext` response.
-- Correct the Enigma2 key code for play/pause (164) and add play (207) and pause (119).
+- Correct the Enigma2 key code for play/pause (207) and add play (207) and pause (119).
   Stop remains 128.
 - Use the live-TV left/right keys (105/106) for next/previous channel. On DreamOS, the channel
   keys 402/403 open the service list and switch bouquets there; they do not zap channels.

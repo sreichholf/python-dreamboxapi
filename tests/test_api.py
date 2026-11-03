@@ -341,8 +341,8 @@ class RemoteControlTests(DreamboxApiTestCase):
         cases = (
             ("play", 207),
             ("pause", 119),
-            ("togglePlayPause", 164),
-            ("tooglePlayPause", 164),
+            ("togglePlayPause", 207),
+            ("tooglePlayPause", 207),
             ("stop", 128),
             ("set_channel_up", 106),
             ("set_channel_down", 105),
@@ -383,6 +383,29 @@ class RemoteControlTests(DreamboxApiTestCase):
 
 
 class ServiceTests(DreamboxApiTestCase):
+    def test_play_service_returns_set_service_result(self):
+        service = Mock()
+        service.name = "News"
+        service.ref = "1:0:19:..."
+        bouquet = Mock()
+        bouquet.name = "Favorites"
+        bouquet.ref = "1:7:1:..."
+        bouquet.services = [service]
+        self.post.side_effect = [
+            _response(
+                "<e2simplexmlresult>"
+                "<e2state>True</e2state>"
+                "<e2statetext>Active service is now 'News'</e2statetext>"
+                "</e2simplexmlresult>"
+            ),
+            _response(CURRENT_OK),
+        ]
+
+        result = self.api.playService(service, bouquet)
+
+        self.assertIsInstance(result, SimpleResult)
+        self.assertTrue(result.state)
+
     def test_set_service_uses_zap_and_parses_state(self):
         service = Mock()
         service.name = "News"
@@ -447,6 +470,16 @@ class BouquetTests(DreamboxApiTestCase):
         self.assertEqual(len(self.api.bouquets), 2)
         self.assertEqual(self.api.bouquet.name, "Favourites (TV)")
         self.assertEqual(len(self.api.bouquet.services), 2)
+
+    def test_get_bouquets_keeps_tv_when_radio_fails(self):
+        self.post.side_effect = [
+            _response(TV_ALL_SERVICES_OK),
+            _response("", status_code=500),
+        ]
+
+        self.api.get_bouquets()
+
+        self.assertEqual(len(self.api.bouquets), 2)
 
     def test_get_bouquets_selects_the_configured_default(self):
         self.api._defaultBouquet = NEWS_REF

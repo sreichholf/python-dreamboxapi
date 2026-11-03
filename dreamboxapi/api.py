@@ -16,6 +16,7 @@ from dreamboxapi.data import (
 from dreamboxapi.exceptions import (
     DreamboxAuthenticationError,
     DreamboxConnectionError,
+    DreamboxError,
     DreamboxProtocolError,
 )
 
@@ -64,7 +65,7 @@ class DreamboxApi(object):
     KEY_VOLUME_UP = 115
     KEY_PAUSE = 119
     KEY_STOP = 128
-    KEY_PLAY_PAUSE = 164
+    KEY_PLAY_PAUSE = 207
     KEY_PLAY = 207
     KEY_LEFT = 105
     KEY_RIGHT = 106
@@ -138,7 +139,10 @@ class DreamboxApi(object):
         )
         if result is not None:
             self._instandby = standby
-        self.get_powerstate()
+        try:
+            self.get_powerstate()
+        except DreamboxError as err:
+            _LOGGER.debug("Could not refresh power state: %s", err)
 
     standby = property(_getStandby, _setStandby)
 
@@ -240,7 +244,7 @@ class DreamboxApi(object):
     def playService(self, service, bouquet=None):
         if not bouquet:
             bouquet = self._bouquet
-        self.set_service(service, bouquet)
+        return self.set_service(service, bouquet)
 
     def stop(self):
         return self.set_remotekeypress(DreamboxApi.KEY_STOP)
@@ -422,7 +426,12 @@ class DreamboxApi(object):
 
     def get_bouquets(self):
         self._bouquets = self.get_all_services(DreamboxApi.TV_BOUQUETS)
-        self._bouquets.extend(self.get_all_services(DreamboxApi.RADIO_BOUQUETS))
+        try:
+            self._bouquets.extend(
+                self.get_all_services(DreamboxApi.RADIO_BOUQUETS)
+            )
+        except DreamboxError as err:
+            _LOGGER.warning("Could not load radio bouquets: %s", err)
         self._bouquet = None
         if not self._bouquets:
             return
@@ -453,5 +462,8 @@ class DreamboxApi(object):
         if not result.state:
             _LOGGER.warning("Play failed with: {}".format(result.text))
         else:
-            self.get_current()
+            try:
+                self.get_current()
+            except DreamboxError as err:
+                _LOGGER.debug("Could not refresh current service: %s", err)
         return result
