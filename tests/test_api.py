@@ -11,7 +11,6 @@ from dreamboxapi.exceptions import (
     DreamboxProtocolError,
 )
 
-
 REMOTE_CONTROL_OK = (
     "<e2remotecontrol>"
     "<e2result>True</e2result>"

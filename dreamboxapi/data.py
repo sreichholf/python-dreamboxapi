@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 """
 <e2deviceinfo>
     <e2enigmaversion>4.3.2r14-5-gb4ae1-2020-12-07</e2enigmaversion>

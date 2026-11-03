@@ -1,15 +1,15 @@
 import logging
-
-import requests
+import threading
+import xml.etree.cElementTree as ET
 from urllib.parse import urlencode
 
-import xml.etree.cElementTree as ET
+import requests
 
 from dreamboxapi.data import (
-    Service,
-    ServiceList,
     DeviceInfo,
     RemoteControlResult,
+    Service,
+    ServiceList,
     SimpleResult,
     Volume,
 )
@@ -96,6 +96,7 @@ class DreamboxApi(object):
 
         self._session = requests.Session()
         self._session.auth = (self._user, self._pass)
+        self._request_lock = threading.RLock()
         protocol = "https" if self._https else "http"
         self._baseUrl = "{}://{}:{}".format(protocol, self._host, self._port)
 
@@ -125,7 +126,8 @@ class DreamboxApi(object):
         self.get_powerstate()
 
     def close(self):
-        self._session.close()
+        with self._request_lock:
+            self._session.close()
 
     def _getStandby(self):
         return self._instandby
@@ -186,11 +188,12 @@ class DreamboxApi(object):
         if not url:
             return (None, None)
 
-        try:
-            response = self._session.get(url, timeout=self._timeout)
-        except requests.RequestException as err:
-            _LOGGER.debug("Picon request to %s failed: %s", url, err)
-            raise DreamboxConnectionError(str(err)) from err
+        with self._request_lock:
+            try:
+                response = self._session.get(url, timeout=self._timeout)
+            except requests.RequestException as err:
+                _LOGGER.debug("Picon request to %s failed: %s", url, err)
+                raise DreamboxConnectionError(str(err)) from err
 
         if response.status_code == 401:
             raise AuthenticationFailed(response)
@@ -261,6 +264,10 @@ class DreamboxApi(object):
         return self.set_remotekeypress(DreamboxApi.KEY_LEFT)
 
     def _call(self, url, data=None, timeout=None, retry_session=True):
+        with self._request_lock:
+            return self._call_unlocked(url, data, timeout, retry_session)
+
+    def _call_unlocked(self, url, data=None, timeout=None, retry_session=True):
         data = dict(data or {})
         if self._sessionid is not None:
             data["sessionid"] = self._sessionid

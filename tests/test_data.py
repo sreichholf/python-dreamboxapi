@@ -10,7 +10,6 @@ from dreamboxapi.data import (
     Volume,
 )
 
-
 EVENT_XML = """
 <e2event>
     <e2eventid>1234</e2eventid>
