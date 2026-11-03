@@ -286,6 +286,13 @@ class UpdateFailureTests(DreamboxApiTestCase):
         self.assertEqual(len(self.api.bouquets), 2)
 
 
+class VolumeTests(DreamboxApiTestCase):
+    def test_muted_is_none_without_volume_state(self):
+        self.api._volume = None
+
+        self.assertIsNone(self.api.muted)
+
+
 class CurrentTests(DreamboxApiTestCase):
     def test_get_current_without_service_clears_current_and_parses_volume(self):
         self.api._current = Mock()

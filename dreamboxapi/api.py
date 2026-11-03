@@ -205,6 +205,8 @@ class DreamboxApi(object):
         return (response.content, content_type)
 
     def _getMuted(self):
+        if not self._volume:
+            return None
         return self._volume.muted
 
     def _setMuted(self, muted):
