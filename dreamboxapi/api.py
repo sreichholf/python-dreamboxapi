@@ -7,7 +7,14 @@ from urllib.parse import urlencode
 
 import xml.etree.cElementTree as ET
 
-from dreamboxapi.data import Service, ServiceList, DeviceInfo, SimpleResult, Volume
+from dreamboxapi.data import (
+    Service,
+    ServiceList,
+    DeviceInfo,
+    RemoteControlResult,
+    SimpleResult,
+    Volume,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,8 +51,12 @@ class DreamboxApi(object):
 
     KEY_VOLUME_DOWN = 114
     KEY_VOLUME_UP = 115
+    KEY_PAUSE = 119
     KEY_STOP = 128
-    KEY_PLAY_PAUSE = 207
+    KEY_PLAY_PAUSE = 164
+    KEY_PLAY = 207
+    KEY_LEFT = 105
+    KEY_RIGHT = 106
 
     def __init__(
         self,
@@ -97,9 +108,12 @@ class DreamboxApi(object):
         return self._instandby
 
     def _setStandby(self, standby):
-        self.set_powerstate(
+        result = self.set_powerstate(
             DreamboxApi.POWER_STANDBY if standby else DreamboxApi.POWER_WAKEUP
         )
+        if result is not None:
+            self._instandby = standby
+        self.get_powerstate()
 
     standby = property(_getStandby, _setStandby)
 
@@ -176,10 +190,27 @@ class DreamboxApi(object):
         self.set_service(service, bouquet)
 
     def stop(self):
-        self.set_remotekeypress(DreamboxApi.KEY_STOP)
+        return self.set_remotekeypress(DreamboxApi.KEY_STOP)
+
+    def play(self):
+        return self.set_remotekeypress(DreamboxApi.KEY_PLAY)
+
+    def pause(self):
+        return self.set_remotekeypress(DreamboxApi.KEY_PAUSE)
+
+    def togglePlayPause(self):
+        return self.set_remotekeypress(DreamboxApi.KEY_PLAY_PAUSE)
 
     def tooglePlayPause(self):
-        self.set_remotekeypress(DreamboxApi.KEY_PLAY_PAUSE)
+        return self.togglePlayPause()
+
+    def set_channel_up(self):
+        """Zap to the next service using the live-TV right-arrow key."""
+        return self.set_remotekeypress(DreamboxApi.KEY_RIGHT)
+
+    def set_channel_down(self):
+        """Zap to the previous service using the live-TV left-arrow key."""
+        return self.set_remotekeypress(DreamboxApi.KEY_LEFT)
 
     def _call(self, url, data={}):
         try:
@@ -232,9 +263,17 @@ class DreamboxApi(object):
             self._url(DreamboxApi.URL_POWERSTATE), data={"newstate": state}
         )
         if root is None:
-            return
-        self._instandby = root.find("e2instandby").text.lower() == "true"
-        _LOGGER.debug(self._instandby)
+            return None
+        state_text = root.findtext("e2instandby")
+        if state_text is not None:
+            state_text = state_text.strip().lower()
+        if state_text not in ("true", "false"):
+            return None
+        result = state_text == "true"
+        if state == DreamboxApi.POWER_GET:
+            self._instandby = result
+            _LOGGER.debug(self._instandby)
+        return result
 
     def get_volume(self):
         root = self._call(self._url(DreamboxApi.URL_VOLUME))
@@ -308,10 +347,12 @@ class DreamboxApi(object):
             self._bouquet = self._bouquets[0]
 
     def set_remotekeypress(self, code):
-        root = self._call(self._url(DreamboxApi.URL_ZAP), data={"command": code})
+        root = self._call(
+            self._url(DreamboxApi.URL_REMOTECONTROL), data={"command": code}
+        )
         if root is None:
             return False
-        return SimpleResult(root)
+        return RemoteControlResult(root)
 
     def set_service(self, service, bouquet):
         if not service in bouquet.services:

@@ -85,10 +85,18 @@ class EpgEvent(object):
 
     @property
     def duration(self):
+        return self._duration
+
+    @property
+    def duration_minutes(self):
         return self._duration / 60
 
     @property
     def remaining(self):
+        return self._remaining
+
+    @property
+    def remaining_minutes(self):
         return self._remaining / 60
 
     @property
@@ -140,16 +148,16 @@ class EpgEvent(object):
 
 class NetworkInterface(object):
     def __init__(self, element):
-        self._name = element.find("e2name").text or ""
-        self._mac = element.find("e2mac").text or ""
-        self._dhcp = element.find("e2dhcp").text == "dhcp"
-        self._ip = element.find("e2ip").text or ""
-        self._gateway = element.find("e2gateway").text or ""
-        self._netmask = element.find("e2netmask").text or ""
-        self._method6 = element.find("e2method6").text or ""
-        self._ip6 = element.find("e2gateway6").text or ""
-        self._gateway6 = element.find("e2dhcp").text or ""
-        self._netmask6 = element.find("e2netmask6").text or ""
+        self._name = element.findtext("e2name") or ""
+        self._mac = element.findtext("e2mac") or ""
+        self._dhcp = element.findtext("e2dhcp") == "dhcp"
+        self._ip = element.findtext("e2ip") or ""
+        self._gateway = element.findtext("e2gateway") or ""
+        self._netmask = element.findtext("e2netmask") or ""
+        self._method6 = element.findtext("e2method6") or ""
+        self._ip6 = element.findtext("e2ip6") or ""
+        self._gateway6 = element.findtext("e2gateway6") or ""
+        self._netmask6 = element.findtext("e2netmask6") or ""
 
     @property
     def name(self):
@@ -178,6 +186,10 @@ class NetworkInterface(object):
     @property
     def method6(self):
         return self._method6
+
+    @property
+    def ip6(self):
+        return self._ip6
 
     @property
     def gateway6(self):
@@ -255,6 +267,28 @@ class SimpleResult(object):
     def __init__(self, element):
         self._state = element.find("e2state").text.lower() == "true"
         self._text = element.find("e2statetext").text
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def text(self):
+        return self._text
+
+
+"""
+<e2remotecontrol>
+	<e2result>True</e2result>
+	<e2resulttext>RC command '207' has been issued</e2resulttext>
+</e2remotecontrol>
+"""
+
+
+class RemoteControlResult(object):
+    def __init__(self, element):
+        self._state = (element.findtext("e2result") or "").strip().lower() == "true"
+        self._text = element.findtext("e2resulttext") or ""
 
     @property
     def state(self):
