@@ -2,10 +2,12 @@ import unittest
 import xml.etree.cElementTree as ET
 
 from dreamboxapi.data import (
+    DeviceInfo,
     EpgEvent,
     NetworkInterface,
     RemoteControlResult,
     SimpleResult,
+    Volume,
 )
 
 
@@ -49,6 +51,38 @@ class EpgEventTests(unittest.TestCase):
         self.assertEqual(event.duration_minutes, 90)
         self.assertEqual(event.remaining_minutes, 30)
 
+    def test_missing_fields_use_defaults(self):
+        event = EpgEvent(ET.fromstring("<e2event><e2eventid>7</e2eventid></e2event>"))
+
+        self.assertEqual(event.id, 7)
+        self.assertEqual(event.start, "-")
+        self.assertEqual(event.duration, 0)
+        self.assertEqual(event.provider, "...")
+        self.assertEqual(event.title, "...")
+        self.assertEqual(event.description, "...")
+
+    def test_title_falls_back_to_service_name(self):
+        event = EpgEvent(
+            ET.fromstring("<e2event><e2servicename>News</e2servicename></e2event>")
+        )
+
+        self.assertEqual(event.title, "News")
+
+
+class DeviceInfoTests(unittest.TestCase):
+    def test_missing_fields_use_defaults(self):
+        info = DeviceInfo(
+            ET.fromstring(
+                "<e2deviceinfo><e2devicename>dm900</e2devicename></e2deviceinfo>"
+            )
+        )
+
+        self.assertEqual(info.deviceName, "dm900")
+        self.assertEqual(info.enigmaVersion, "")
+        self.assertEqual(info.imageVersion, "")
+        self.assertEqual(info.webifVersion, "")
+        self.assertEqual(info.interfaces, [])
+
 
 class NetworkInterfaceTests(unittest.TestCase):
     def test_ipv6_fields_come_from_ip6_and_gateway6(self):
@@ -81,6 +115,12 @@ class SimpleResultTests(unittest.TestCase):
 
         self.assertTrue(result.state)
         self.assertEqual(result.text, "Active service is now 'News'")
+
+    def test_missing_fields_use_defaults(self):
+        result = SimpleResult(ET.fromstring("<e2simplexmlresult />"))
+
+        self.assertFalse(result.state)
+        self.assertEqual(result.text, "")
 
 
 class RemoteControlResultTests(unittest.TestCase):
@@ -115,6 +155,33 @@ class RemoteControlResultTests(unittest.TestCase):
         result = RemoteControlResult(element)
 
         self.assertTrue(result.state)
+
+    def test_missing_state_is_false(self):
+        result = RemoteControlResult(ET.fromstring("<e2remotecontrol />"))
+
+        self.assertFalse(result.state)
+        self.assertEqual(result.text, "")
+
+
+class VolumeTests(unittest.TestCase):
+    def test_parses_volume_and_mute_state(self):
+        volume = Volume(
+            ET.fromstring(
+                "<e2volume>"
+                "<e2current>90</e2current>"
+                "<e2ismuted>True</e2ismuted>"
+                "</e2volume>"
+            )
+        )
+
+        self.assertEqual(volume.volume, 90)
+        self.assertTrue(volume.muted)
+
+    def test_missing_fields_use_defaults(self):
+        volume = Volume(ET.fromstring("<e2volume />"))
+
+        self.assertEqual(volume.volume, 0)
+        self.assertFalse(volume.muted)
 
 
 if __name__ == "__main__":

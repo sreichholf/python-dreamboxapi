@@ -26,6 +26,11 @@
 - `set_powerstate()` now returns the state reported by the webinterface, or `None` when it cannot
   be read. Only `POWER_GET` (`-1`) updates the cached standby state; use `get_powerstate()` for
   an authoritative refresh after a command.
+- Request timeouts, typed exceptions (`DreamboxConnectionError`,
+  `DreamboxAuthenticationError`, `DreamboxProtocolError`), `close()`, and `update_status()`.
+- `get_picon()` returns the authenticated image bytes and content type.
+- `get_all_services()` and a cached two-request `get_bouquets()` using `/web/getallservices`.
+- `update()` tolerates a failed device-info fetch and continues with status and bouquets.
 
 ### Changed
 
