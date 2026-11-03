@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 """
 <e2deviceinfo>
     <e2enigmaversion>4.3.2r14-5-gb4ae1-2020-12-07</e2enigmaversion>
@@ -14,13 +13,15 @@ from datetime import datetime
 
 class DeviceInfo(object):
     def __init__(self, element):
-        self._enigmaVersion = element.find("e2enigmaversion").text or ""
-        self._imageVersion = element.find("e2imageversion").text or ""
-        self._webifVersion = element.find("e2webifversion").text or ""
-        self._deviceName = element.find("e2devicename").text or ""
+        self._enigmaVersion = element.findtext("e2enigmaversion") or ""
+        self._imageVersion = element.findtext("e2imageversion") or ""
+        self._webifVersion = element.findtext("e2webifversion") or ""
+        self._deviceName = element.findtext("e2devicename") or ""
         self._interfaces = []
-        for interface in element.find("e2network"):
-            self._interfaces.append(NetworkInterface(interface))
+        network = element.find("e2network")
+        if network is not None:
+            for interface in network:
+                self._interfaces.append(NetworkInterface(interface))
 
     @property
     def enigmaVersion(self):
@@ -56,21 +57,21 @@ class EpgEvent(object):
         self._description = ""
         self._extendedDescription = ""
         if element is not None:
-            self._id = int(element.find("e2eventid").text or "0")
-            self._start = int(element.find("e2eventstart").text or "0")
-            self._duration = int(element.find("e2eventduration").text or "0")
-            self._remaining = int(element.find("e2eventremaining").text or "0")
-            self._time = float(element.find("e2eventcurrenttime").text or "0.0")
-            self._provider = element.find("e2eventprovidername").text or "..."
-            self._name = element.find("e2eventname").text or "..."
+            self._id = int(element.findtext("e2eventid") or "0")
+            self._start = int(element.findtext("e2eventstart") or "0")
+            self._duration = int(element.findtext("e2eventduration") or "0")
+            self._remaining = int(element.findtext("e2eventremaining") or "0")
+            self._time = float(element.findtext("e2eventcurrenttime") or "0.0")
+            self._provider = element.findtext("e2eventprovidername") or "..."
+            self._name = element.findtext("e2eventname") or "..."
             self._title = (
-                element.find("e2eventtitle").text
-                or element.find("e2servicename")
+                element.findtext("e2eventtitle")
+                or element.findtext("e2servicename")
                 or "..."
             )
-            self._description = element.find("e2eventdescription").text or "..."
+            self._description = element.findtext("e2eventdescription") or "..."
             self._extendedDescription = (
-                element.find("e2eventdescriptionextended").text or "..."
+                element.findtext("e2eventdescriptionextended") or "..."
             )
 
     @property
@@ -85,10 +86,18 @@ class EpgEvent(object):
 
     @property
     def duration(self):
+        return self._duration
+
+    @property
+    def duration_minutes(self):
         return self._duration / 60
 
     @property
     def remaining(self):
+        return self._remaining
+
+    @property
+    def remaining_minutes(self):
         return self._remaining / 60
 
     @property
@@ -140,16 +149,16 @@ class EpgEvent(object):
 
 class NetworkInterface(object):
     def __init__(self, element):
-        self._name = element.find("e2name").text or ""
-        self._mac = element.find("e2mac").text or ""
-        self._dhcp = element.find("e2dhcp").text == "dhcp"
-        self._ip = element.find("e2ip").text or ""
-        self._gateway = element.find("e2gateway").text or ""
-        self._netmask = element.find("e2netmask").text or ""
-        self._method6 = element.find("e2method6").text or ""
-        self._ip6 = element.find("e2gateway6").text or ""
-        self._gateway6 = element.find("e2dhcp").text or ""
-        self._netmask6 = element.find("e2netmask6").text or ""
+        self._name = element.findtext("e2name") or ""
+        self._mac = element.findtext("e2mac") or ""
+        self._dhcp = element.findtext("e2dhcp") == "dhcp"
+        self._ip = element.findtext("e2ip") or ""
+        self._gateway = element.findtext("e2gateway") or ""
+        self._netmask = element.findtext("e2netmask") or ""
+        self._method6 = element.findtext("e2method6") or ""
+        self._ip6 = element.findtext("e2ip6") or ""
+        self._gateway6 = element.findtext("e2gateway6") or ""
+        self._netmask6 = element.findtext("e2netmask6") or ""
 
     @property
     def name(self):
@@ -180,6 +189,10 @@ class NetworkInterface(object):
         return self._method6
 
     @property
+    def ip6(self):
+        return self._ip6
+
+    @property
     def gateway6(self):
         return self._gateway6
 
@@ -190,10 +203,10 @@ class NetworkInterface(object):
 
 class Service(object):
     def __init__(self, element, events=None):
-        self._name = element.find("e2servicename").text or ""
-        self._ref = element.find("e2servicereference").text or ""
+        self._name = element.findtext("e2servicename") or ""
+        self._ref = element.findtext("e2servicereference") or ""
         self._events = []
-        if events:
+        if events is not None:
             for event in events.iter("e2event"):
                 self._events.append(EpgEvent(event))
         while len(self._events) < 2:
@@ -253,8 +266,30 @@ class ServiceList(Service):
 
 class SimpleResult(object):
     def __init__(self, element):
-        self._state = element.find("e2state").text.lower() == "true"
-        self._text = element.find("e2statetext").text
+        self._state = (element.findtext("e2state") or "").lower() == "true"
+        self._text = element.findtext("e2statetext") or ""
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def text(self):
+        return self._text
+
+
+"""
+<e2remotecontrol>
+	<e2result>True</e2result>
+	<e2resulttext>RC command '207' has been issued</e2resulttext>
+</e2remotecontrol>
+"""
+
+
+class RemoteControlResult(object):
+    def __init__(self, element):
+        self._state = (element.findtext("e2result") or "").strip().lower() == "true"
+        self._text = element.findtext("e2resulttext") or ""
 
     @property
     def state(self):
@@ -277,8 +312,8 @@ class SimpleResult(object):
 
 class Volume(object):
     def __init__(self, element):
-        self._volume = int(element.find("e2current").text)
-        self._muted = element.find("e2ismuted").text == "True"
+        self._volume = int(element.findtext("e2current") or 0)
+        self._muted = element.findtext("e2ismuted") == "True"
 
     @property
     def muted(self):
